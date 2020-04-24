@@ -48,6 +48,20 @@ def crawl(directory):
     return pages
 
 
+def normalize_distribution(distribution):
+
+    # Use the sum of distribution values to determine alpha (normalising value)
+    totalProbability = 0
+    for value in distribution.values():
+        totalProbability += value
+
+    # alpha = 1/totalProbability
+    for value in distribution.values():
+        value = value/totalProbability
+
+    return distribution
+
+
 def transition_model(corpus, page, damping_factor):
     """
     Return a probability distribution over which page to visit next,
@@ -57,7 +71,27 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
-    raise NotImplementedError
+
+    probabilityDistribution = dict()
+
+    # Damping factor probablity
+    for nextPage in corpus[page]:
+        probabilityDistribution[nextPage] = 1/len(corpus[page])
+
+    # Calculate the random landing probability
+    # This is added to every page in the corpus
+    notDProbability = (1-damping_factor)/len(corpus)
+
+    for keyPage in corpus:
+        if not keyPage in probabilityDistribution:
+            probabilityDistribution[keyPage] = 0
+
+        probabilityDistribution[keyPage] += notDProbability
+
+    # Normalising the distribution
+    probabilityDistribution = normalize_distribution(probabilityDistribution)
+
+    return probabilityDistribution
 
 
 def sample_pagerank(corpus, damping_factor, n):
