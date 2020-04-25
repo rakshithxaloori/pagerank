@@ -3,8 +3,11 @@ import random
 import re
 import sys
 
+from pomegranate import *
+
 DAMPING = 0.85
 SAMPLES = 10000
+CONVERGE_VALUE = 0.001
 
 
 def main():
@@ -103,6 +106,12 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
+
+    # Generate a node for each page
+    randomPage = random.choice(list(corpus.keys()))
+    for pageKey in corpus:
+        pageNode = Node()
+
     raise NotImplementedError
 
 
@@ -115,7 +124,34 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    pageRanks = dict()
+    totalCountPages = len(corpus)
+    for page in corpus:
+        pageRanks[page] = 1/totalCountPages
+
+    # Apply the iterative formula
+    converge = False
+    while not converge:
+        copyPageRanks = copy
+        tempSum = dict()
+        for pageKey, pageNextPages in corpus:
+            # Add the pageNextPage
+            countPagesI = len(pageNextPages)
+            for nextPage in pageNextPages:
+                if not nextPage in tempSum:
+                    tempSum[nextPage] = 0
+                tempSum[nextPage] += pageRanks[pageKey]/countPagesI
+
+        for pageKey, sumDamping in tempSum:
+            tempPageRank = ((1-damping_factor) /
+                            totalCountPages) + damping_factor*sumDamping
+            if (tempPageRank - pageRanks[pageKey]) < CONVERGE_VALUE:
+                converge = True
+                break
+            else:
+                pageRanks[pageKey] = tempPageRank
+
+    return pageRanks
 
 
 if __name__ == "__main__":
