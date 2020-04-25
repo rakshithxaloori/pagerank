@@ -106,13 +106,39 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
+    pageRanks = dict()
+    model = MarkovChain()
 
-    # Generate a node for each page
-    randomPage = random.choice(list(corpus.keys()))
-    for pageKey in corpus:
-        pageNode = Node()
+    # The first page that is randomly selected
+    firstOrder = dict()
+    countTotalPages = len(corpus)
 
-    raise NotImplementedError
+    for page in corpus.keys():
+        firstOrder[page] = 1/countTotalPages
+
+    d1 = DiscreteDistribution(
+        firstOrder
+    )
+
+    # The next page a random surfer selects after a page
+    secondOrder = []
+
+    for pageKey, pageSet in corpus:
+        transitionModel = transition_model(corpus, pageKey, damping_factor)
+        for nextPage in pageSet:
+            secondOrderList = [pageKey, nextPage, transitionModel[nextPage]]
+            secondOrder.append(secondOrderList)
+
+    d2 = ConditionalProbabilityTable(
+        secondOrder
+    )
+
+    # Create a Markov Chain
+    model = MarkovChain([d1, d2])
+
+    # Using model to create samples
+
+    return pageRanks
 
 
 def iterate_pagerank(corpus, damping_factor):
