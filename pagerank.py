@@ -107,7 +107,6 @@ def sample_pagerank(corpus, damping_factor, n):
     PageRank values should sum to 1.
     """
     pageRanks = dict()
-    model = MarkovChain()
 
     # The first page that is randomly selected
     firstOrder = dict()
@@ -123,20 +122,22 @@ def sample_pagerank(corpus, damping_factor, n):
     # The next page a random surfer selects after a page
     secondOrder = []
 
-    for pageKey, pageSet in corpus:
+    for pageKey, pageSet in corpus.items():
         transitionModel = transition_model(corpus, pageKey, damping_factor)
         for nextPage in pageSet:
             secondOrderList = [pageKey, nextPage, transitionModel[nextPage]]
             secondOrder.append(secondOrderList)
 
     d2 = ConditionalProbabilityTable(
-        secondOrder
+        secondOrder, [d1]
     )
 
     # Create a Markov Chain
     model = MarkovChain([d1, d2])
 
     # Using model to create samples
+    print(model.sample(1))
+    print(model.sample(2))
 
     return pageRanks
 
@@ -158,9 +159,8 @@ def iterate_pagerank(corpus, damping_factor):
     # Apply the iterative formula
     converge = False
     while not converge:
-        copyPageRanks = copy
         tempSum = dict()
-        for pageKey, pageNextPages in corpus:
+        for pageKey, pageNextPages in corpus.items():
             # Add the pageNextPage
             countPagesI = len(pageNextPages)
             for nextPage in pageNextPages:
@@ -168,7 +168,7 @@ def iterate_pagerank(corpus, damping_factor):
                     tempSum[nextPage] = 0
                 tempSum[nextPage] += pageRanks[pageKey]/countPagesI
 
-        for pageKey, sumDamping in tempSum:
+        for pageKey, sumDamping in tempSum.items():
             tempPageRank = ((1-damping_factor) /
                             totalCountPages) + damping_factor*sumDamping
             if (tempPageRank - pageRanks[pageKey]) < CONVERGE_VALUE:
