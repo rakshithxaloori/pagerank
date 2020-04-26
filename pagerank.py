@@ -4,6 +4,7 @@ import re
 import sys
 
 from pomegranate import *
+from collections import Counter
 
 DAMPING = 0.85
 SAMPLES = 10000
@@ -59,8 +60,8 @@ def normalize_distribution(distribution):
         totalProbability += value
 
     # alpha = 1/totalProbability
-    for value in distribution.values():
-        value = value/totalProbability
+    for key in distribution.keys():
+        distribution[key] = distribution[key]/totalProbability
 
     return distribution
 
@@ -136,9 +137,11 @@ def sample_pagerank(corpus, damping_factor, n):
     model = MarkovChain([d1, d2])
 
     # Using model to create samples
-    print(model.sample(1))
-    print(model.sample(2))
-
+    data = model.sample(SAMPLES)
+    countDict = Counter(data)
+    for page in corpus.keys():
+        pageRanks[page] = countDict[page]/SAMPLES
+    
     return pageRanks
 
 
