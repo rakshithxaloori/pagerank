@@ -160,8 +160,13 @@ def iterate_pagerank(corpus, damping_factor):
         pageRanks[page] = 1/totalCountPages
 
     # Apply the iterative formula
-    converge = False
-    while not converge:
+    converge = dict()
+    for page in corpus.keys():
+        converge[page] = False
+
+    totalConverge = False
+    
+    while not totalConverge:
         tempSum = dict()
         for pageKey, pageNextPages in corpus.items():
             # Add the pageNextPage
@@ -174,10 +179,23 @@ def iterate_pagerank(corpus, damping_factor):
         for pageKey, sumDamping in tempSum.items():
             tempPageRank = ((1-damping_factor)/totalCountPages) + (damping_factor*sumDamping)
             if abs(tempPageRank - pageRanks[pageKey]) < CONVERGE_VALUE:
-                converge = True
-                break
+                converge[pageKey] = True
             else:
                 pageRanks[pageKey] = tempPageRank
+
+        breakStatement = False
+        for convergeBool in converge.values():
+            if convergeBool == False:
+                breakStatement = True
+                break
+
+        if breakStatement:
+            # All values didn't converge yet
+            continue
+        else:
+            # All values have converged
+            totalConverge = True
+            break
 
     return pageRanks
 
