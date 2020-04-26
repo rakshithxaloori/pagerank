@@ -167,14 +167,13 @@ def iterate_pagerank(corpus, damping_factor):
             # Add the pageNextPage
             countPagesI = len(pageNextPages)
             for nextPage in pageNextPages:
-                if not nextPage in tempSum:
+                if not nextPage in tempSum.keys():
                     tempSum[nextPage] = 0
                 tempSum[nextPage] += pageRanks[pageKey]/countPagesI
 
         for pageKey, sumDamping in tempSum.items():
-            tempPageRank = ((1-damping_factor) /
-                            totalCountPages) + damping_factor*sumDamping
-            if (tempPageRank - pageRanks[pageKey]) < CONVERGE_VALUE:
+            tempPageRank = ((1-damping_factor)/totalCountPages) + (damping_factor*sumDamping)
+            if abs(tempPageRank - pageRanks[pageKey]) < CONVERGE_VALUE:
                 converge = True
                 break
             else:
