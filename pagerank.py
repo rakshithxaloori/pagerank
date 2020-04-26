@@ -125,7 +125,7 @@ def sample_pagerank(corpus, damping_factor, n):
 
     for pageKey, pageSet in corpus.items():
         transitionModel = transition_model(corpus, pageKey, damping_factor)
-        for nextPage in pageSet:
+        for nextPage in transitionModel.keys():
             secondOrderList = [pageKey, nextPage, transitionModel[nextPage]]
             secondOrder.append(secondOrderList)
 
@@ -141,7 +141,7 @@ def sample_pagerank(corpus, damping_factor, n):
     countDict = Counter(data)
     for page in corpus.keys():
         pageRanks[page] = countDict[page]/SAMPLES
-    
+
     return pageRanks
 
 
@@ -163,9 +163,7 @@ def iterate_pagerank(corpus, damping_factor):
     converge = dict()
     for page in corpus.keys():
         converge[page] = False
-
     totalConverge = False
-    
     while not totalConverge:
         tempSum = dict()
         for pageKey, pageNextPages in corpus.items():
