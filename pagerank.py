@@ -174,8 +174,10 @@ def iterate_pagerank(corpus, damping_factor):
                     tempSum[nextPage] = 0
                 tempSum[nextPage] += pageRanks[pageKey]/countPagesI
 
-        for pageKey, sumDamping in tempSum.items():
-            tempPageRank = ((1-damping_factor)/totalCountPages) + (damping_factor*sumDamping)
+        for pageKey in corpus.keys():
+            tempPageRank = ((1-damping_factor)/totalCountPages)
+            if pageKey in tempSum:
+                tempPageRank += (damping_factor*tempSum[pageKey])
             if abs(tempPageRank - pageRanks[pageKey]) < CONVERGE_VALUE:
                 converge[pageKey] = True
             else:
