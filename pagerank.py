@@ -3,8 +3,8 @@ import random
 import re
 import sys
 
-from pomegranate import *
 from collections import Counter
+from random import choice, choices
 
 DAMPING = 0.85
 SAMPLES = 10000
@@ -108,36 +108,37 @@ def sample_pagerank(corpus, damping_factor, n):
     PageRank values should sum to 1.
     """
     pageRanks = dict()
-
-    # The first page that is randomly selected
-    firstOrder = dict()
-    countTotalPages = len(corpus)
+    
+    transitionModelListDict = dict()
+    allPagesList = list()
+    data = list()
 
     for page in corpus.keys():
-        firstOrder[page] = 1/countTotalPages
+        allPagesList.append(page)
 
-    d1 = DiscreteDistribution(
-        firstOrder
-    )
+    # Store transition models in a dictionary, transitionModelListDict[page] = (pagesList, pageWeightsList)
+    for page in corpus.keys():
+        pageTransitionModel = transition_model(corpus, page, damping_factor)
+        pages = []
+        pageWeights = []
+        for nextPage, weight in pageTransitionModel.items():
+            pages.append(nextPage)
+            pageWeights.append(weight)
+        
+        transitionModelListDict[page] = (pages, pageWeights)
 
-    # The next page a random surfer selects after a page
-    secondOrder = []
+    # First ramdomly choose a page
+    prevPage = choice(allPagesList)
+    data.append(prevPage)
 
-    for pageKey, pageSet in corpus.items():
-        transitionModel = transition_model(corpus, pageKey, damping_factor)
-        for nextPage in transitionModel.keys():
-            secondOrderList = [pageKey, nextPage, transitionModel[nextPage]]
-            secondOrder.append(secondOrderList)
+    # Choose the next values from transitionModelListDict
+    for i in range(SAMPLES):
+        nextPage = choices(population = transitionModelListDict[prevPage][0], weights = transitionModelListDict[prevPage][1], k = 1)[0]
+        prevPage = nextPage
+        data.append(prevPage)
 
-    d2 = ConditionalProbabilityTable(
-        secondOrder, [d1]
-    )
 
-    # Create a Markov Chain
-    model = MarkovChain([d1, d2])
-
-    # Using model to create samples
-    data = model.sample(SAMPLES)
+    # Count the samples from data
     countDict = Counter(data)
     for page in corpus.keys():
         pageRanks[page] = countDict[page]/SAMPLES
@@ -159,30 +160,41 @@ def iterate_pagerank(corpus, damping_factor):
     for page in corpus:
         pageRanks[page] = 1/totalCountPages
 
-    # Apply the iterative formula
+    # Dictionary to track which pageRanks have converged
     converge = dict()
     for page in corpus.keys():
         converge[page] = False
-    totalConverge = False
-    while not totalConverge:
-        tempSum = dict()
-        for pageKey, pageNextPages in corpus.items():
-            # Add the pageNextPage
-            countPagesI = len(pageNextPages)
-            for nextPage in pageNextPages:
-                if not nextPage in tempSum.keys():
-                    tempSum[nextPage] = 0
-                tempSum[nextPage] += pageRanks[pageKey]/countPagesI
 
+    # Boolean to check if all pageRanks have converged
+    totalConverge = False
+
+    # Keep applying the iterative formula until convergence
+    while not totalConverge:
+
+        sigmaLink = dict()
+        # sigmaLink stores the sigma part in the iterative formula
+        for pageKey, linkedPages in corpus.items():
+            countPagesI = len(linkedPages)
+            for nextPage in linkedPages:
+                if not nextPage in sigmaLink.keys():
+                    sigmaLink[nextPage] = 0
+                sigmaLink[nextPage] += (pageRanks[pageKey]/countPagesI)
+
+        # Applying the iterative formula to each page
         for pageKey in corpus.keys():
             tempPageRank = ((1-damping_factor)/totalCountPages)
-            if pageKey in tempSum:
-                tempPageRank += (damping_factor*tempSum[pageKey])
-            if abs(tempPageRank - pageRanks[pageKey]) < CONVERGE_VALUE:
+            if pageKey in sigmaLink:
+                tempPageRank += (damping_factor*sigmaLink[pageKey])
+
+            # Check for convergence
+            if abs((tempPageRank - pageRanks[pageKey])) < CONVERGE_VALUE:
+                # Convergence attained
                 converge[pageKey] = True
             else:
+                # Update the value
                 pageRanks[pageKey] = tempPageRank
 
+        # Checking if all pageRanks have converged
         breakStatement = False
         for convergeBool in converge.values():
             if convergeBool == False:
@@ -190,7 +202,7 @@ def iterate_pagerank(corpus, damping_factor):
                 break
 
         if breakStatement:
-            # All values didn't converge yet
+            # All values haven't converged yet
             continue
         else:
             # All values have converged
