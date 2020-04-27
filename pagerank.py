@@ -209,6 +209,7 @@ def iterate_pagerank(corpus, damping_factor):
             totalConverge = True
             break
 
+    pageRanks = normalize_distribution(pageRanks)
     return pageRanks
 
 
